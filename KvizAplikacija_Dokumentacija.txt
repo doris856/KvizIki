@@ -1,0 +1,106 @@
+# 📚 Dokumentacija: Kviz aplikacija s unosom iz Worda u MySQL
+
+## 1. 🎯 Opis projekta
+
+Aplikacija omogućuje unos pitanja i odgovora iz Word dokumenta (.docx) u MySQL bazu podataka. Svako pitanje ima jedan točan i tri netočna odgovora. Program se pokreće kao Java konzolna aplikacija (Maven projekt), a koristi `Apache POI` za obradu `.docx` datoteka i `JDBC` za rad s MySQL bazom.
+
+---
+
+## 2. 📂 Struktura baze podataka (MySQL)
+
+```sql
+CREATE TABLE pitanje (
+    sifra INT PRIMARY KEY,
+    tekst TEXT
+);
+
+CREATE TABLE odgovor (
+    sifra INT PRIMARY KEY,
+    pitanje_sifra INT,
+    tekst TEXT,
+    tocan BOOLEAN,
+    FOREIGN KEY (pitanje_sifra) REFERENCES pitanje(sifra)
+);
+```
+
+---
+
+## 3. 📄 Format ulaznog Word dokumenta (`pitanja.docx`)
+
+Sadržaj mora biti strukturiran kao:
+
+```
+Pitanje 1
+Točan odgovor 1
+Netočan odgovor 1
+Netočan odgovor 2
+Netočan odgovor 3
+Pitanje 2
+Točan odgovor 2
+...
+```
+
+> ❗ Nema praznih redova. Svakih 5 redova = 1 pitanje.
+
+---
+
+## 4. 💻 Java aplikacija (`KvizImport.java`)
+
+Aplikacija:
+- Briše postojeće podatke iz tablica `pitanje` i `odgovor`
+- Čita redove iz `.docx`
+- Po svakoj grupi od 5 redova: dodaje pitanje, 1 točan i 3 netočna odgovora
+
+Koristi:
+- `org.apache.poi.xwpf.usermodel.*` (za Word)
+- `java.sql.*` (za JDBC)
+
+---
+
+## 5. ⚙️ Tehnički preduvjeti
+
+- NetBeans 17 ili noviji
+- JDK 17+ (koristili smo JDK 23)
+- Apache Maven
+- XAMPP / MySQL (port 3306, baza `kviz`)
+- Datoteka `pitanja.docx` nalazi se u **rootu projekta**
+
+---
+
+## 6. 📦 Maven dependency (`pom.xml`)
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml</artifactId>
+        <version>5.2.3</version>
+    </dependency>
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <version>8.0.33</version>
+    </dependency>
+</dependencies>
+```
+
+---
+
+## 7. 🧪 Testiranje
+
+Nakon pokretanja:
+- Tablica `pitanje` treba imati broj pitanja
+- Tablica `odgovor` treba imati 4× broj pitanja
+- Za svako pitanje → 1 `tocan = 1`, 3 `tocan = 0`
+
+Provjera:
+```sql
+SELECT * FROM pitanje;
+SELECT * FROM odgovor;
+SELECT pitanje_sifra, COUNT(*) FROM odgovor GROUP BY pitanje_sifra;
+SELECT pitanje_sifra, COUNT(*) FROM odgovor WHERE tocan = 1 GROUP BY pitanje_sifra HAVING COUNT(*) != 1;
+```
+
+---
+
+✅ **Datum pripreme dokumentacije:** 10.06.2025
